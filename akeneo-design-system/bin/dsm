@@ -129,14 +129,16 @@ const getFileMetrics = async (filePath) => {
           .toString('utf8');
 
         const isSVG = -1 !== fileContent.indexOf(`<svg `);
-        const isTest = -1 !== fileContent.indexOf(`from '@testing-library/react';`);
-        const isOther = !isSVG && !isTest;
+        const isTest = -1 !== fileContent.indexOf(`from '@testing-library/react';`) || -1 !== filePath.indexOf('.unit.') || -1 !== filePath.indexOf('.test.');
+        const isShared = -1 !== filePath.indexOf('/shared/') || -1 !== filePath.indexOf('common/components');
+        const isComponent = !isSVG && !isTest && !isShared;
         const usesStyledComponents = -1 !== fileContent.indexOf(`from 'styled-components';`);
         const usesPimShared = -1 !== fileContent.indexOf(`from '@akeneo-pim-community/shared';`);
         const usesLegacyBridge = -1 !== fileContent.indexOf(`from '@akeneo-pim-community/legacy-bridge';`);
         const usesDSM = -1 !== fileContent.indexOf(`from 'akeneo-design-system';`);
+        const usesBEM = -1 !== fileContent.indexOf(`className='Akn`) || -1 !== fileContent.indexOf(`className="Akn`) || -1 !== fileContent.indexOf(`className={\`Akn`);
 
-        resolve({isSVG, isTest, isOther, usesStyledComponents, usesPimShared, usesLegacyBridge, usesDSM})
+        resolve({isSVG, isTest, isShared, isComponent, usesStyledComponents, usesPimShared, usesLegacyBridge, usesDSM, usesBEM})
       }
     });
   })
@@ -153,23 +155,16 @@ const compileMetrics = (metrics) => {
     total: metrics.length,
     isSVG: 0,
     isTest: 0,
-    isOther: 0,
+    isShared: 0,
+    isComponent: 0,
     usesStyledComponents: 0,
     usesPimShared: 0,
     usesLegacyBridge: 0,
+    usesBEM: 0,
     usesDSM: 0,
+    usesDSMOverStyledComponents: 100,
+    usesDSMOverBEM: 100
   });
-
-
-
-
-  // ({
-  //   isSVG: metric.isSVG ? result.isSVG + 1 : result.isSVG,
-  //   isTest: metric.isTest ? result.isTest + 1 : result.isTest,
-  //   usesStyledComponents: metric.usesStyledComponents ? result.usesStyledComponents + 1 : result.usesStyledComponents,
-  //   usesPimShared: metric.usesPimShared ? result.usesPimShared + 1 : result.usesPimShared,
-  //   usesLegacyBridge: metric.usesLegacyBridge ? result.usesLegacyBridge + 1 : result.usesLegacyBridge,
-  // }), {isSVG: 0, isTest: 0, usesStyledComponents: 0, usesPimShared: 0, usesLegacyBridge: 0})
 }
 
 (async () => {
@@ -187,7 +182,13 @@ const compileMetrics = (metrics) => {
           metrics.push(await getFileMetrics(file));
         }
 
-        console.log(compileMetrics(metrics));
+        const compiledMetrics = compileMetrics(metrics);
+
+        console.log({
+          ...compiledMetrics,
+          usesDSMOverStyledComponents: `${Math.round(compiledMetrics.usesDSM/compiledMetrics.usesStyledComponents*100)}%`,
+          usesDSMOverBEM: `${Math.round(compiledMetrics.usesDSM/compiledMetrics.usesBEM*100)}%`
+        })
 
         break;
 

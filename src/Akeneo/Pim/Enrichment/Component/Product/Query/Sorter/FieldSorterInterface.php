@@ -21,7 +21,7 @@ interface FieldSorterInterface extends SorterInterface
      *
      * @return FieldSorterInterface
      */
-    public function addFieldSorter($field, $direction, $locale = null, $channel = null): FieldSorterInterface;
+    public function addFieldSorter($field, $direction, $locale = null, $channel = null);
 
     /**
      * This filter supports the field

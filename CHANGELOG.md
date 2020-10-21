@@ -70,6 +70,8 @@
 
 # Technical Improvements
 
+- TIP-152: Upgrade ElasticSearch to 9.5.2
+
 ## Classes
 
 ## BC breaks

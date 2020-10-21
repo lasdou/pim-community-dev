@@ -66,8 +66,6 @@ class ComputeCompletenessOnFamilyUpdateSubscriberSpec extends ObjectBehavior
         ArrayCollection $attributes
     ) {
         $event->getSubject()->willReturn($family);
-        $event->hasArgument('unitary')->willReturn(true);
-        $event->getArgument('unitary')->willReturn(true);
 
         $family->getId()->willReturn(152);
 
@@ -121,8 +119,6 @@ class ComputeCompletenessOnFamilyUpdateSubscriberSpec extends ObjectBehavior
         ArrayCollection $attributes
     ) {
         $event->getSubject()->willReturn($family);
-        $event->hasArgument('unitary')->willReturn(true);
-        $event->getArgument('unitary')->willReturn(true);
 
         $family->getId()->willReturn(152);
 
@@ -172,10 +168,9 @@ class ComputeCompletenessOnFamilyUpdateSubscriberSpec extends ObjectBehavior
         ArrayCollection $attributes
     ) {
         $event->getSubject()->willReturn($family);
-        $event->hasArgument('unitary')->willReturn(true);
-        $event->getArgument('unitary')->willReturn(true);
 
         $family->getId()->willReturn(152);
+        $family->getCode()->willReturn('accessories');
 
         $attributeRequirementRepository->findRequiredAttributesCodesByFamily($family)->willReturn(
             [
@@ -213,9 +208,6 @@ class ComputeCompletenessOnFamilyUpdateSubscriberSpec extends ObjectBehavior
         GenericEvent $event,
         FamilyInterface $family
     ) {
-        $event->hasArgument('unitary')->willReturn(true);
-        $event->getArgument('unitary')->willReturn(true);
-
         $family->getId()->willReturn(null);
         $event->getSubject()->willReturn($family);
         $jobLauncher->launch(Argument::cetera())->shouldNotBeCalled();
@@ -229,21 +221,6 @@ class ComputeCompletenessOnFamilyUpdateSubscriberSpec extends ObjectBehavior
         GenericEvent $event
     ) {
         $event->getSubject()->willReturn(new \StdClass());
-
-        $jobLauncher->launch(Argument::cetera())->shouldNotBeCalled();
-
-        $this->checkIfUpdateNeedsToRunBackgroundJob($event);
-        $this->computeCompletenessOfProductsFamily($event);
-    }
-
-    function it_only_handles_unitary_events(
-        $jobLauncher,
-        GenericEvent $event,
-        FamilyInterface $family
-    ) {
-        $event->getSubject()->willReturn($family);
-        $event->hasArgument('unitary')->willReturn(true);
-        $event->getArgument('unitary')->willReturn(false);
 
         $jobLauncher->launch(Argument::cetera())->shouldNotBeCalled();
 

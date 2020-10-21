@@ -42,20 +42,9 @@ final class ComputeCompletenessOnFamilyUpdateSubscriber implements EventSubscrib
     /** @var FindAttributesForFamily */
     private $findAttributesForFamily;
 
-    /** @var bool */
-    private $areAttributeRequirementsUpdatedForFamilies;
+    /** @var string[] */
+    private $familyCodesToRecompute = [];
 
-    /** @var bool */
-    private $isAttributeListUpdated;
-
-    /**
-     * @param TokenStorageInterface                   $tokenStorage
-     * @param JobLauncherInterface                    $jobLauncher
-     * @param IdentifiableObjectRepositoryInterface   $jobInstanceRepository
-     * @param AttributeRequirementRepositoryInterface $attributeRequirementRepository
-     * @param FindAttributesForFamily                 $findAttributesForFamily
-     * @param string                                  $jobName
-     */
     public function __construct(
         TokenStorageInterface $tokenStorage,
         JobLauncherInterface $jobLauncher,
@@ -68,10 +57,8 @@ final class ComputeCompletenessOnFamilyUpdateSubscriber implements EventSubscrib
         $this->jobLauncher = $jobLauncher;
         $this->jobInstanceRepository = $jobInstanceRepository;
         $this->attributeRequirementRepository = $attributeRequirementRepository;
-        $this->findAttributesForFamily = $findAttributesForFamily;
         $this->jobName = $jobName;
-        $this->areAttributeRequirementsUpdatedForFamilies = false;
-        $this->isAttributeListUpdated = false;
+        $this->findAttributesForFamily = $findAttributesForFamily;
     }
 
     /**
@@ -105,19 +92,13 @@ final class ComputeCompletenessOnFamilyUpdateSubscriber implements EventSubscrib
             return;
         }
 
-        if (!$event->hasArgument('unitary') || false === $event->getArgument('unitary')) {
-            return;
-        }
-
         if (null === $subject->getId()) {
-            $this->areAttributeRequirementsUpdatedForFamilies = false;
-            $this->isAttributeListUpdated = false;
-
             return;
         }
 
-        $this->areAttributeRequirementsUpdatedForFamilies = $this->areAttributeRequirementsListsUpdated($subject);
-        $this->isAttributeListUpdated = $this->isAttributeListUpdated($subject);
+        if ($this->areAttributeRequirementsListsUpdated($subject) || $this->isAttributeListUpdated($subject)) {
+            $this->familyCodesToRecompute[$subject->getCode()] = $subject->getCode();
+        }
     }
 
     /**
@@ -133,15 +114,16 @@ final class ComputeCompletenessOnFamilyUpdateSubscriber implements EventSubscrib
             return;
         }
 
-        if (!$event->hasArgument('unitary') || false === $event->getArgument('unitary')) {
+        if (null === $subject->getId()) {
             return;
         }
 
-        if ($this->areAttributeRequirementsUpdatedForFamilies || $this->isAttributeListUpdated) {
+        if (isset($this->familyCodesToRecompute[$subject->getCode()])) {
             $token = $this->tokenStorage->getToken();
             $user = $token->getUser();
             $jobInstance = $this->jobInstanceRepository->findOneByIdentifier($this->jobName);
             $this->jobLauncher->launch($jobInstance, $user, ['family_code' => $subject->getCode()]);
+            unset($this->familyCodesToRecompute[$subject->getCode()]);
         }
     }
 
